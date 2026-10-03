@@ -1,40 +1,53 @@
-# Ghostty Sidegeist
+# Ghostty Sidegeist for Linux
 
-**Personal fork of [Ghostty](https://github.com/ghostty-org/ghostty)** with a sidebar tab system and a built-in git panel, integrated here with a native GTK implementation for Linux. For the official Ghostty terminal, visit [ghostty.org](https://ghostty.org). All credit goes to them.
+A personal [Ghostty](https://github.com/ghostty-org/ghostty) fork that brings
+[Sidegeist](https://github.com/tomreinert/ghostty-sidegeist)'s sidebar and Git
+panel to Linux with a native GTK implementation.
 
-🧪 **Experimental**
+Built for personal use on Linux. The imported macOS changes are untested.
 
-Please note that this is experimental and I built it for my own use.
+![Ghostty Sidegeist running on Linux with vertical tabs and the Git panel](images/ghostty-linux.png)
 
-📦 **[Download Ghostty Sidegeist for macOS](https://github.com/tomreinert/ghostty-sidegeist/releases/latest/download/Ghostty-Sidegeist.zip)**
+## Features
 
-<img width="1125" height="749" alt="ghostty-sidebar" src="https://github.com/user-attachments/assets/919a9220-4e07-4b2e-b491-c9d385b6585f" />
+- **Vertical tabs:** cards show the title, working directory, Git branch, custom
+  status entries, and attention indicators for notifications or bells.
+- **Tab organization:** rename and color tabs, drag to reorder, move between
+  windows, or drop outside the sidebar to open a new window.
+- **Resizable sidebar:** drag the divider to adjust its width. Colors follow
+  your terminal theme, and normal tab shortcuts and splits still work.
+- **Git panel:** inspect changes, switch local branches, open files, commit,
+  push, pull, and discard changes with confirmation.
+- **CLI control:** use `ghosttyctl` to name tabs, set status entries and colors,
+  and send notifications from scripts or terminal tools.
 
-## Linux build
+## Build and run
 
-This checkout includes [Sidegeist](https://github.com/tomreinert/ghostty-sidegeist)
-at `d2a8f6b99e59cae6dc7d526609ce4ad982c0649b`, adapted to Ghostty's GTK runtime.
-Linux is the target of this integration; the imported macOS code is untested.
-
-With the repository's Nix development environment:
+Using the repository's Nix development environment:
 
 ```sh
 nix develop --command zig build -Doptimize=ReleaseFast
 ./zig-out/bin/ghostty --gtk-tabs-location=left
 ```
 
-On other Linux distributions, install Ghostty's normal GTK build dependencies
-and Zig 0.16.0, then run `zig build -Doptimize=ReleaseFast`. Git must be on
-`PATH` for the branch labels and Git panel. The build also installs
-`zig-out/bin/ghosttyctl`, which requires Python 3.
+On other Linux distributions, install Ghostty's GTK build dependencies and
+Zig 0.16.0, then build with:
 
-The sidebar is the default. Drag its divider to resize it. Tab shortcuts and
-splits continue to work; right-click a card for rename, color, close, and
-move-to-window actions. Drag cards to reorder them or move them between
-windows; dropping outside a tab list opens a new window.
+```sh
+zig build -Doptimize=ReleaseFast
+./zig-out/bin/ghostty --gtk-tabs-location=left
+```
+
+Git must be on `PATH` for branch labels and the Git panel. The build also
+installs `zig-out/bin/ghosttyctl`, which requires Python 3. See
+[HACKING.md](HACKING.md) for the upstream development guide.
+
+## Configuration
+
+The sidebar is enabled by default. These settings can go in your Ghostty
+config, normally `~/.config/ghostty/config`:
 
 ```ini
-# Use top or bottom for Ghostty's horizontal tab bar instead.
 gtk-tabs-location = left
 sidebar-fields = title,directory,git-branch,status
 sidebar-git = true
@@ -42,19 +55,61 @@ sidebar-show-tab-border = true
 sidebar-dim-inactive-colors = false
 ```
 
-The Git panel follows the selected tab's active split. It supports local branch
-switching, opening changed files, committing all changes, push, fast-forward
-pull, and confirmed discard. Repository updates run asynchronously. Set
-`VISUAL` or `EDITOR` to open files in that editor in a terminal tab; otherwise
-files open in the desktop's default application.
+Use `gtk-tabs-location = top` or `bottom` for the horizontal tab bar. Set
+`sidebar-git = false` to hide the Git panel, or remove entries from
+`sidebar-fields` to simplify the tab cards.
 
-`GHOSTTY_SOCKET` and `GHOSTTY_TAB_ID` are set in each shell, including splits.
-They keep CLI commands aimed at the originating tab even while another tab is
-selected or after the tab moves to another window. Independent instances use
-separate sockets. Outside Ghostty, the CLI defaults to `/tmp/ghostty-<uid>.sock`;
-set `GHOSTTY_SOCKET` to select a different instance.
+Right-click a card, or open its menu, to rename it, choose a color, close tabs,
+or move it to another window. Clicking a card's directory opens it in the
+desktop's file manager.
 
-Linux validation commands:
+## Git panel
+
+The panel follows the selected tab's active split and updates asynchronously
+as its working directory or repository changes. It shows the current branch,
+ahead/behind counts, and changed files.
+
+- Click the branch name to switch to another local branch.
+- Click a changed file to open it using `VISUAL` or `EDITOR` in a new terminal
+  tab. Without either variable, it opens in the desktop's default application.
+- Enter a message and select **Commit All** to stage and commit all changes.
+- Use **Push** or **Pull** to synchronize with the configured remote. Pull only
+  permits a fast-forward update.
+- Discard an individual file or all changes after confirming the dialog.
+  Discard includes staged changes and removes affected untracked or added files.
+
+## CLI
+
+Add `zig-out/bin` to your `PATH`, or symlink `cli/ghosttyctl` into a directory
+already on it, to use these commands inside Ghostty:
+
+```sh
+ghosttyctl rename "My project"
+ghosttyctl set-color teal
+ghosttyctl set-status server "localhost:3000" --icon network
+ghosttyctl clear-status server
+ghosttyctl notify --title "Done" --body "Build finished"
+ghosttyctl list
+ghosttyctl current
+```
+
+Colors are `none`, `blue`, `purple`, `pink`, `red`, `orange`, `yellow`, `green`,
+`teal`, and `graphite`. Status icons accept GTK icon names; `network` is also
+supported as a shortcut.
+
+Each shell receives `GHOSTTY_SOCKET` and `GHOSTTY_TAB_ID`, including shells in
+splits. Commands target their originating tab even when another tab is selected
+or the tab moves to another window. Independent instances use separate sockets.
+
+Outside Ghostty, the CLI defaults to `/tmp/ghostty-<uid>.sock`. Set
+`GHOSTTY_SOCKET` to choose another instance and `GHOSTTY_TAB_ID` to target a
+specific tab. `list` and `current` return tab information as JSON.
+
+## Validation
+
+The Linux release build has been checked with targeted Zig tests, CLI
+regression tests, and an isolated X11 desktop test covering tab moves and
+dragging, Git actions, config reload, and shutdown.
 
 ```sh
 nix develop --command zig build test -Dtest-filter=sidebar
@@ -62,63 +117,16 @@ PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s test/sidegeist -v
 dbus-run-session -- python3 test/sidegeist/linux_smoke.py --binary zig-out/bin/ghostty
 ```
 
-The desktop test needs Xvfb, Openbox, xdotool, Git, PyGObject and pyatspi. It
-uses temporary repositories and a local remote, loads an isolated config, and
-checks shell identities, tab moves, Git actions, IPC, reload and shutdown.
+The desktop test requires Xvfb, Openbox, xdotool, Git, PyGObject, and pyatspi.
+It uses temporary repositories, a local Git remote, and an isolated Ghostty
+config.
 
-## Sidebar
+## Credits
 
-Replaces the native tab bar with a left sidebar. The top shows rich tab cards; a [git panel](#git-panel) is pinned to the bottom.
+- [Ghostty](https://ghostty.org) provides the terminal and native GTK runtime.
+- [Sidegeist](https://github.com/tomreinert/ghostty-sidegeist) provides the
+  original sidebar and Git panel design. This integration merges Sidegeist at
+  `d2a8f6b99e59cae6dc7d526609ce4ad982c0649b` and ports those features to GTK.
 
-- **Title, directory, git branch** — git branch detected automatically, no setup needed
-- **Custom status entries** — show ports, environments, or any metadata via CLI
-- **Attention indicators** — orange dot on tabs with notifications or bell
-- **Drag-and-drop** — reorder tabs by dragging
-- **Move between windows** — drag a tab card out of the sidebar and drop it on another window (or anywhere else for a new window); the same actions are in the tab's context menu
-- **Theme-aware** — colors derived from your terminal theme
-- **Git panel** — branch, changes, and commit / push / pull for the selected tab's repo ([details](#git-panel))
-
-### Config
-
-```
-# Choose which tab-card fields to show (default: all)
-sidebar-fields = title,directory,git-branch,status
-
-# Show the git panel at the bottom of the sidebar (default: true)
-sidebar-git = true
-```
-
-### CLI
-
-Use the installed `zig-out/bin/ghosttyctl`, or symlink `cli/ghosttyctl` somewhere on your PATH (e.g. `~/.local/bin/ghosttyctl`). Python 3 is required.
-
-```bash
-ghosttyctl rename "My Tab"                                    # rename tab
-ghosttyctl notify --title "Done" --body "Build finished"      # send notification
-ghosttyctl set-status server "localhost:3000" --icon network  # add status entry
-ghosttyctl clear-status server                                # remove it
-ghosttyctl set-color blue                                    # color this tab
-ghosttyctl list                                               # list all tabs
-ghosttyctl current                                            # current tab info
-```
-
-### Claude Code
-
-Add to your `~/.claude/CLAUDE.md` so Claude Code can name its tabs and set status:
-
-```markdown
-- Rename the workspace using: `ghosttyctl rename "Claude: <name>"`. Name it after the work being done.
-- Set sidebar status entries using `ghosttyctl set-status <key> <value> [--icon <sf-symbol>]` and clear with `ghosttyctl clear-status <key>`.
-```
-
-## Git panel
-
-A small git panel pinned to the bottom of the sidebar, scoped to the selected tab's repo:
-
-- **Branch + sync** — current branch, ahead/behind, and inline checkout / commit / push / pull
-- **Changes** — pending files with colour-coded status (`M` modified, `A` added, `D` deleted, `?` untracked, `U` conflict)
-- **Click to open** — click a file to open it in your editor via `$VISUAL`/`$EDITOR` (e.g. Cursor, VS Code)
-
-This one is especially personal, built around how I work day to day. If it's not for you, turn it off with `sidebar-git = false` (see [Config](#config) above).
-
----
+See the [Ghostty documentation](https://ghostty.org/docs) for general terminal
+configuration and [LICENSE](LICENSE) for licensing.
