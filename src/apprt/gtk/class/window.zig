@@ -31,6 +31,7 @@ const CommandPalette = @import("command_palette.zig").CommandPalette;
 const WeakRef = @import("../weak_ref.zig").WeakRef;
 const TitleDialog = @import("title_dialog.zig").TitleDialog;
 const Overrides = @import("Overrides.zig");
+const Sidebar = @import("../sidebar/Sidebar.zig");
 
 const log = std.log.scoped(.gtk_ghostty_window);
 
@@ -231,6 +232,8 @@ pub const Window = extern struct {
     };
 
     const Private = struct {
+        sidebar: ?*Sidebar = null,
+        sidebar_box: *gtk.Box,
         /// Whether this window is a quick terminal. If it is then it
         /// behaves slightly differently under certain scenarios.
         quick_terminal: bool = false,
@@ -366,6 +369,10 @@ pub const Window = extern struct {
         // We always sync our appearance at the end because loading our
         // config and such can affect our bindings which are setup initially
         // in initTemplate.
+        priv.sidebar = Sidebar.new(self, priv.sidebar_box) catch |err| blk: {
+            log.warn("could not create sidebar: {}", .{err});
+            break :blk null;
+        };
         self.syncAppearance();
 
         // We need to do this so that the title initializes properly,
@@ -718,6 +725,11 @@ pub const Window = extern struct {
         // Remainder uses the config
         const config = if (priv.config) |v| v.get() else return;
 
+        const sidebar_visible = config.@"gtk-tabs-location" == .left and
+            config.@"window-show-tab-bar" != .never and !priv.quick_terminal;
+        priv.sidebar_box.as(gtk.Widget).setVisible(@intFromBool(sidebar_visible));
+        if (priv.sidebar) |sidebar| sidebar.configure(config);
+
         // Only add a solid background if we're opaque.
         self.toggleCssClass(
             "background",
@@ -736,6 +748,7 @@ pub const Window = extern struct {
         // Move the tab bar to the proper location.
         priv.toolbar.remove(priv.tab_bar.as(gtk.Widget));
         switch (config.@"gtk-tabs-location") {
+            .left => priv.toolbar.addTopBar(priv.tab_bar.as(gtk.Widget)),
             .top => priv.toolbar.addTopBar(priv.tab_bar.as(gtk.Widget)),
             .bottom => priv.toolbar.addBottomBar(priv.tab_bar.as(gtk.Widget)),
         }
@@ -917,6 +930,8 @@ pub const Window = extern struct {
 
         // Don't change urgency if we're not the active window.
         if (self.as(gtk.Window).isActive() == 0) return 0;
+
+        if (priv.tab_view.getSelectedPage()) |page| page.setNeedsAttention(0);
 
         self.winproto().setUrgent(false) catch |err| {
             log.warn(
@@ -1106,7 +1121,7 @@ pub const Window = extern struct {
 
         return switch (config.@"gtk-titlebar-style") {
             // If the titlebar style is tabs never show the titlebar.
-            .tabs => false,
+            .tabs => config.@"gtk-tabs-location" == .left and config.@"gtk-titlebar",
 
             // If the titlebar style is native show the titlebar if configured
             // to do so.
@@ -1139,6 +1154,7 @@ pub const Window = extern struct {
     fn getTabsVisible(self: *Self) bool {
         const priv = self.private();
         const config = if (priv.config) |v| v.get() else return true;
+        if (config.@"gtk-tabs-location" == .left and priv.sidebar != null) return false;
 
         switch (config.@"gtk-titlebar-style") {
             .tabs => {
@@ -1436,6 +1452,10 @@ pub const Window = extern struct {
 
     fn dispose(self: *Self) callconv(.c) void {
         const priv = self.private();
+        if (priv.sidebar) |sidebar| {
+            sidebar.deinit();
+            priv.sidebar = null;
+        }
 
         if (priv.handle_active_state_source) |v| {
             if (glib.Source.remove(v) == 0) {
@@ -2349,6 +2369,7 @@ pub const Window = extern struct {
             class.bindTemplateChildPrivate("tab_view", .{});
             class.bindTemplateChildPrivate("toolbar", .{});
             class.bindTemplateChildPrivate("toast_overlay", .{});
+            class.bindTemplateChildPrivate("sidebar_box", .{});
 
             // Template Callbacks
             class.bindTemplateCallback("realize", &windowRealize);

@@ -1,5 +1,6 @@
 const builtin = @import("builtin");
 const std = @import("std");
+const SidegeistIPC = @import("../ipc/Sidegeist.zig");
 const assert = @import("../../../quirks.zig").inlineAssert;
 const Allocator = std.mem.Allocator;
 const adw = @import("adw");
@@ -168,6 +169,7 @@ pub const Application = extern struct {
     };
 
     const Private = struct {
+        sidegeist_ipc: ?*SidegeistIPC = null,
         /// The apprt App. This is annoying that we need this it'd be
         /// nicer to just make THIS the apprt app but the current libghostty
         /// API doesn't allow that.
@@ -491,6 +493,10 @@ pub const Application = extern struct {
         return self.private().saved_language;
     }
 
+    pub fn sidegeistSocket(self: *Self) ?[:0]const u8 {
+        return if (self.private().sidegeist_ipc) |ipc| ipc.path else null;
+    }
+
     /// Run the application. This is a replacement for `gio.Application.run`
     /// because we want more tight control over our event loop so we can
     /// integrate it with libghostty.
@@ -504,6 +510,10 @@ pub const Application = extern struct {
 
         // The final cleanup that is always required at the end of running.
         defer {
+            if (self.private().sidegeist_ipc) |ipc| {
+                ipc.deinit();
+                self.private().sidegeist_ipc = null;
+            }
             // Ensure our timer source is removed
             self.stopQuitTimer();
 
@@ -907,6 +917,26 @@ pub const Application = extern struct {
         // Load standard css first as it can override some of the user configured styling.
         try loadRuntimeCss414(config, writer);
         try loadRuntimeCss416(config, writer);
+
+        try writer.print(
+            \\.sidegeist {{ background-color: rgb({d},{d},{d}); color: rgb({d},{d},{d}); }}
+            \\.sidebar-card.active {{ background-color: rgba({d},{d},{d},0.12); }}
+            \\.sidebar-card:hover {{ background-color: rgba({d},{d},{d},0.08); }}
+            \\
+        , .{
+            @as(u16, config.background.r) * 94 / 100 + @as(u16, config.foreground.r) * 6 / 100,
+            @as(u16, config.background.g) * 94 / 100 + @as(u16, config.foreground.g) * 6 / 100,
+            @as(u16, config.background.b) * 94 / 100 + @as(u16, config.foreground.b) * 6 / 100,
+            config.foreground.r,
+            config.foreground.g,
+            config.foreground.b,
+            config.foreground.r,
+            config.foreground.g,
+            config.foreground.b,
+            config.foreground.r,
+            config.foreground.g,
+            config.foreground.b,
+        });
 
         const unfocused_fill: CoreConfig.Color = config.@"unfocused-split-fill" orelse config.background;
 
@@ -1395,6 +1425,11 @@ pub const Application = extern struct {
         // Setup our action map
         self.startupActionMap();
 
+        self.private().sidegeist_ipc = SidegeistIPC.new() catch |err| blk: {
+            log.warn("could not start Sidegeist IPC: {}", .{err});
+            break :blk null;
+        };
+
         // Setup our global shortcuts
         self.startupGlobalShortcuts();
 
@@ -1566,6 +1601,10 @@ pub const Application = extern struct {
 
     fn dispose(self: *Self) callconv(.c) void {
         const priv = self.private();
+        if (priv.sidegeist_ipc) |ipc| {
+            ipc.deinit();
+            priv.sidegeist_ipc = null;
+        }
         if (priv.config_errors_dialog.get()) |diag| {
             diag.close();
             diag.unref(); // strong ref from get()

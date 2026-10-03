@@ -233,3 +233,76 @@ label.resize-overlay {
   margin: 0;
   padding: 0;
 }
+
+/* Sidegeist vertical tabs. Colors are supplied by the terminal theme. */
+.sidegeist {
+  padding: 6px;
+}
+.sidebar-tabs {
+  background: transparent;
+}
+.sidebar-card {
+  margin: 3px 0;
+  padding: 6px 8px;
+  border-radius: 8px;
+  border-left: 3px solid transparent;
+}
+.sidebar-card button,
+.sidebar-card menubutton > button {
+  min-height: 20px;
+  min-width: 20px;
+  padding: 2px;
+}
+.sidebar-card .sidebar-directory {
+  padding: 0;
+  font-size: 0.9em;
+}
+.sidebar-card .attention {
+  color: #ff9f0a;
+  -gtk-icon-size: 10px;
+}
+.sidebar-card.color-blue {
+  border-left-color: #5b9bff;
+}
+.sidebar-card.color-purple {
+  border-left-color: #b68cff;
+}
+.sidebar-card.color-pink {
+  border-left-color: #f38bbd;
+}
+.sidebar-card.color-red {
+  border-left-color: #ef5b5b;
+}
+.sidebar-card.color-orange {
+  border-left-color: #ff9f43;
+}
+.sidebar-card.color-yellow {
+  border-left-color: #f9d76d;
+}
+.sidebar-card.color-green {
+  border-left-color: #75c991;
+}
+.sidebar-card.color-teal {
+  border-left-color: #66cfc9;
+}
+.sidebar-card.color-graphite {
+  border-left-color: #9296a0;
+}
+.sidebar-card.dim-colors:not(.active) {
+  border-left-color: alpha(currentColor, 0.25);
+}
+.sidebar-card.no-border {
+  border-left-color: transparent;
+}
+.sidebar-git {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid alpha(currentColor, 0.15);
+}
+.sidebar-git button {
+  min-height: 24px;
+  padding: 3px 5px;
+}
+.sidebar-git entry {
+  min-width: 0;
+}

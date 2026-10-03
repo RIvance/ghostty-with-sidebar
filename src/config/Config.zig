@@ -1082,6 +1082,30 @@ palette: Palette = .{},
 /// Available since: 1.1.0
 @"split-divider-color": ?Color = null,
 
+/// Comma-separated list of fields to display in the sidebar tab cards.
+/// Available fields: `title`, `directory`, `git-branch`, `status`.
+/// - `title`: the tab title (process name or custom rename)
+/// - `directory`: the working directory (last path component)
+/// - `git-branch`: the branch detected from the working directory
+/// - `status`: status entries set via `ghosttyctl set-status`
+///
+/// Default: `title,directory,git-branch,status`
+@"sidebar-fields": ?[:0]const u8 = null,
+
+/// Whether to show the git panel at the bottom of the sidebar. The panel
+/// shows the current branch, pending changes, and offers checkout, commit,
+/// push, and pull for the working directory of the selected tab. The panel
+/// can also be collapsed to a single branch line by clicking its header.
+///
+/// Default: `true`
+@"sidebar-git": bool = true,
+
+/// Show the color stripe on sidebar tab cards (GTK only).
+@"sidebar-show-tab-border": bool = true,
+
+/// Dim the color stripes of inactive sidebar tabs (GTK only).
+@"sidebar-dim-inactive-colors": bool = false,
+
 /// Control when Ghostty preserves a zoomed split. Under normal circumstances,
 /// any operation that changes focus or layout of the split tree in a window
 /// will unzoom any zoomed split. This configuration allows you to control
@@ -3753,15 +3777,11 @@ else
 /// under macOS.
 @"gtk-titlebar": bool = true,
 
-/// Determines the side of the screen that the GTK tab bar will stick to.
-/// Top, bottom, and hidden are supported. The default is top.
-///
-/// When `hidden` is set, a tab button displaying the number of tabs will appear
-/// in the title bar. It has the ability to open a tab overview for displaying
-/// tabs. Alternatively, you can use the `toggle_tab_overview` action in a
-/// keybind if your window doesn't have a title bar, or you can switch tabs
-/// with keybinds.
-@"gtk-tabs-location": GtkTabsLocation = .top,
+/// Where to display GTK tabs. `left` (the default) displays the Sidegeist
+/// sidebar with tab cards and an optional Git panel. `top` and `bottom`
+/// display the horizontal tab bar. Use `window-show-tab-bar = never` to hide
+/// tabs, or `toggle_tab_overview` to view them without a tab bar.
+@"gtk-tabs-location": GtkTabsLocation = .left,
 
 /// If this is `true`, the titlebar will be hidden when the window is maximized,
 /// and shown when the titlebar is unmaximized. GTK only.
@@ -9264,6 +9284,7 @@ pub const GtkSingleInstance = enum {
 
 /// See gtk-tabs-location
 pub const GtkTabsLocation = enum {
+    left,
     top,
     bottom,
 };

@@ -32,3 +32,8 @@ glad.zip
 vgcore.*
 
 /sprite_face_test*
+
+CLAUDE.md
+zig-pkg/
+.playwright-mcp/
+.zig-cache-fresh/

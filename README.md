@@ -1,226 +1,124 @@
-<!-- LOGO -->
-<h1>
-<p align="center">
-  <img src="https://github.com/user-attachments/assets/fe853809-ba8b-400b-83ab-a9a0da25be8a" alt="Logo" width="128">
-  <br>Ghostty
-</h1>
-  <p align="center">
-    Fast, native, feature-rich terminal emulator pushing modern features.
-    <br />
-    A native GUI or embeddable library via <code>libghostty</code>.
-    <br />
-    <a href="#about">About</a>
-    ·
-    <a href="https://ghostty.org/download">Download</a>
-    ·
-    <a href="https://ghostty.org/docs">Documentation</a>
-    ·
-    <a href="CONTRIBUTING.md">Contributing</a>
-    ·
-    <a href="HACKING.md">Developing</a>
-  </p>
-</p>
+# Ghostty Sidegeist
 
-## About
+**Personal fork of [Ghostty](https://github.com/ghostty-org/ghostty)** with a sidebar tab system and a built-in git panel, integrated here with a native GTK implementation for Linux. For the official Ghostty terminal, visit [ghostty.org](https://ghostty.org). All credit goes to them.
 
-Ghostty is a terminal emulator that differentiates itself by being
-fast, feature-rich, and native. While there are many excellent terminal
-emulators available, they all force you to choose between speed,
-features, or native UIs. Ghostty provides all three.
+🧪 **Experimental**
 
-**`libghostty`** is a cross-platform, zero-dependency C and Zig library
-for building terminal emulators or utilizing terminal functionality
-(such as style parsing). Anyone can use `libghostty` to build a terminal
-emulator or embed a terminal into their own applications. See
-[Ghostling](https://github.com/ghostty-org/ghostling) for a minimal complete project
-example or the [`examples` directory](https://github.com/ghostty-org/ghostty/tree/main/example)
-for smaller examples of using `libghostty` in C and Zig.
+Please note that this is experimental and I built it for my own use.
 
-For more details, see [About Ghostty](https://ghostty.org/docs/about).
+📦 **[Download Ghostty Sidegeist for macOS](https://github.com/tomreinert/ghostty-sidegeist/releases/latest/download/Ghostty-Sidegeist.zip)**
 
-## Download
+<img width="1125" height="749" alt="ghostty-sidebar" src="https://github.com/user-attachments/assets/919a9220-4e07-4b2e-b491-c9d385b6585f" />
 
-See the [download page](https://ghostty.org/download) on the Ghostty website.
+## Linux build
 
-## Documentation
+This checkout includes [Sidegeist](https://github.com/tomreinert/ghostty-sidegeist)
+at `d2a8f6b99e59cae6dc7d526609ce4ad982c0649b`, adapted to Ghostty's GTK runtime.
+Linux is the target of this integration; the imported macOS code is untested.
 
-See the [documentation](https://ghostty.org/docs) on the Ghostty website.
+With the repository's Nix development environment:
 
-## Contributing and Developing
-
-If you have any ideas, issues, etc. regarding Ghostty, or would like to
-contribute to Ghostty through pull requests, please check out our
-["Contributing to Ghostty"](CONTRIBUTING.md) document. Those who would like
-to get involved with Ghostty's development as well should also read the
-["Developing Ghostty"](HACKING.md) document for more technical details.
-
-## Roadmap and Status
-
-Ghostty is stable and in use by millions of people and machines daily.
-
-The high-level ambitious plan for the project, in order:
-
-|  #  | Step                                                    | Status |
-| :-: | ------------------------------------------------------- | :----: |
-|  1  | Standards-compliant terminal emulation                  |   ✅   |
-|  2  | Competitive performance                                 |   ✅   |
-|  3  | Rich windowing features -- multi-window, tabbing, panes |   ✅   |
-|  4  | Native Platform Experiences                             |   ✅   |
-|  5  | Cross-platform `libghostty` for Embeddable Terminals    |   ✅   |
-|  6  | Ghostty-only Terminal Control Sequences                 |   ❌   |
-
-Additional details for each step in the big roadmap below:
-
-#### Standards-Compliant Terminal Emulation
-
-Ghostty implements all of the regularly used control sequences and
-can run every mainstream terminal program without issue. For legacy sequences,
-we've done a [comprehensive xterm audit](https://github.com/ghostty-org/ghostty/issues/632)
-comparing Ghostty's behavior to xterm and building a set of conformance
-test cases.
-
-In addition to legacy sequences (what you'd call real "terminal" emulation),
-Ghostty also supports more modern sequences than almost any other terminal
-emulator. These features include things like the Kitty graphics protocol,
-Kitty image protocol, clipboard sequences, synchronized rendering,
-light/dark mode notifications, and many, many more.
-
-We believe Ghostty is one of the most compliant and feature-rich terminal
-emulators available.
-
-Terminal behavior is partially a de jure standard
-(i.e. [ECMA-48](https://ecma-international.org/publications-and-standards/standards/ecma-48/))
-but mostly a de facto standard as defined by popular terminal emulators
-worldwide. Ghostty takes the approach that our behavior is defined by
-(1) standards, if available, (2) xterm, if the feature exists, (3)
-other popular terminals, in that order. This defines what the Ghostty project
-views as a "standard."
-
-#### Competitive Performance
-
-Ghostty is generally in the same performance category as the other highest
-performing terminal emulators.
-
-"The same performance category" means that Ghostty is much faster than
-traditional or "slow" terminals and is within an unnoticeable margin of the
-well-known "fast" terminals. For example, Ghostty and Alacritty are usually within
-a few percentage points of each other on various benchmarks, but are both
-something like 100x faster than Terminal.app and iTerm. However, Ghostty
-is much more feature rich than Alacritty and has a much more native app
-experience.
-
-This performance is achieved through high-level architectural decisions and
-low-level optimizations. At a high-level, Ghostty has a multi-threaded
-architecture with a dedicated read thread, write thread, and render thread
-per terminal. Our renderer uses OpenGL on Linux and Metal on macOS.
-Our read thread has a heavily optimized terminal parser that leverages
-CPU-specific SIMD instructions. Etc.
-
-#### Rich Windowing Features
-
-The Mac and Linux (build with GTK) apps support multi-window, tabbing, and
-splits with additional features such as tab renaming, coloring, etc. These
-features allow for a higher degree of organization and customization than
-single-window terminals.
-
-#### Native Platform Experiences
-
-Ghostty is a cross-platform terminal emulator but we don't aim for a
-least-common-denominator experience. There is a large, shared core written
-in Zig but we do a lot of platform-native things:
-
-- The macOS app is a true SwiftUI-based application with all the things you
-  would expect such as real windowing, menu bars, a settings GUI, etc.
-- macOS uses a true Metal renderer with CoreText for font discovery.
-- macOS supports AppleScript, Apple Shortcuts (AppIntents), etc.
-- The Linux app is built with GTK.
-- The Linux app integrates deeply with systemd if available for things
-  like always-on, new windows in a single instance, cgroup isolation, etc.
-
-Our goal with Ghostty is for users of whatever platform they run Ghostty
-on to think that Ghostty was built for their platform first and maybe even
-exclusively. We want Ghostty to feel like a native app on every platform,
-for the best definition of "native" on each platform.
-
-#### Cross-platform `libghostty` for Embeddable Terminals
-
-In addition to being a standalone terminal emulator, Ghostty is a
-C-compatible library for embedding a fast, feature-rich terminal emulator
-in any 3rd party project. This library is called `libghostty`.
-
-Due to the scope of this project, we're breaking libghostty down into
-separate libraries, starting with `libghostty-vt`. The goal of
-this project is to focus on parsing terminal sequences and maintaining
-terminal state. This is covered in more detail in this
-[blog post](https://mitchellh.com/writing/libghostty-is-coming).
-
-`libghostty-vt` is already available and usable today for Zig and C and
-is compatible for macOS, Linux, Windows, and WebAssembly. The functionality
-is extremely stable (since its been proven in Ghostty GUI for a long time),
-but the API signatures are still in flux.
-
-`libghostty` is already heavily in use. See [`examples`](https://github.com/ghostty-org/ghostty/tree/main/example)
-for small examples of using `libghostty` in C and Zig or the
-[Ghostling](https://github.com/ghostty-org/ghostling) project for a
-complete example. See [awesome-libghostty](https://github.com/Uzaaft/awesome-libghostty)
-for a list of projects and resources related to `libghostty`.
-
-We haven't tagged libghostty with a version yet and we're still working
-on a better docs experience, but our [Doxygen website](https://libghostty.tip.ghostty.org/)
-is a good resource for the C API.
-
-#### Ghostty-only Terminal Control Sequences
-
-We want and believe that terminal applications can and should be able
-to do so much more. We've worked hard to support a wide variety of modern
-sequences created by other terminal emulators towards this end, but we also
-want to fill the gaps by creating our own sequences.
-
-We've been hesitant to do this up until now because we don't want to create
-more fragmentation in the terminal ecosystem by creating sequences that only
-work in Ghostty. But, we do want to balance that with the desire to push the
-terminal forward with stagnant standards and the slow pace of change in the
-terminal ecosystem.
-
-We haven't done any of this yet.
-
-## Crash Reports
-
-Ghostty has a built-in crash reporter that will generate and save crash
-reports to disk. The crash reports are saved to the `$XDG_STATE_HOME/ghostty/crash`
-directory. If `$XDG_STATE_HOME` is not set, the default is `~/.local/state`.
-**Crash reports are _not_ automatically sent anywhere off your machine.**
-
-Crash reports are only generated the next time Ghostty is started after a
-crash. If Ghostty crashes and you want to generate a crash report, you must
-restart Ghostty at least once. You should see a message in the log that a
-crash report was generated.
-
-> [!NOTE]
->
-> Use the `ghostty +crash-report` CLI command to get a list of available crash
-> reports. A future version of Ghostty will make the contents of the crash
-> reports more easily viewable through the CLI and GUI.
-
-Crash reports end in the `.ghosttycrash` extension. The crash reports are in
-[Sentry envelope format](https://develop.sentry.dev/sdk/envelopes/). You can
-upload these to your own Sentry account to view their contents, but the format
-is also publicly documented so any other available tools can also be used.
-The `ghostty +crash-report` CLI command can be used to list any crash reports.
-A future version of Ghostty will show you the contents of the crash report
-directly in the terminal.
-
-To send the crash report to the Ghostty project, you can use the following
-CLI command using the [Sentry CLI](https://docs.sentry.io/cli/installation/):
-
-```shell-session
-SENTRY_DSN=https://e914ee84fd895c4fe324afa3e53dac76@o4507352570920960.ingest.us.sentry.io/4507850923638784 sentry-cli send-envelope --raw <path to ghostty crash>
+```sh
+nix develop --command zig build -Doptimize=ReleaseFast
+./zig-out/bin/ghostty --gtk-tabs-location=left
 ```
 
-> [!WARNING]
->
-> The crash report can contain sensitive information. The report doesn't
-> purposely contain sensitive information, but it does contain the full
-> stack memory of each thread at the time of the crash. This information
-> is used to rebuild the stack trace but can also contain sensitive data
-> depending on when the crash occurred.
+On other Linux distributions, install Ghostty's normal GTK build dependencies
+and Zig 0.16.0, then run `zig build -Doptimize=ReleaseFast`. Git must be on
+`PATH` for the branch labels and Git panel. The build also installs
+`zig-out/bin/ghosttyctl`, which requires Python 3.
+
+The sidebar is the default. Drag its divider to resize it. Tab shortcuts and
+splits continue to work; right-click a card for rename, color, close, and
+move-to-window actions. Drag cards to reorder them or move them between
+windows; dropping outside a tab list opens a new window.
+
+```ini
+# Use top or bottom for Ghostty's horizontal tab bar instead.
+gtk-tabs-location = left
+sidebar-fields = title,directory,git-branch,status
+sidebar-git = true
+sidebar-show-tab-border = true
+sidebar-dim-inactive-colors = false
+```
+
+The Git panel follows the selected tab's active split. It supports local branch
+switching, opening changed files, committing all changes, push, fast-forward
+pull, and confirmed discard. Repository updates run asynchronously. Set
+`VISUAL` or `EDITOR` to open files in that editor in a terminal tab; otherwise
+files open in the desktop's default application.
+
+`GHOSTTY_SOCKET` and `GHOSTTY_TAB_ID` are set in each shell, including splits.
+They keep CLI commands aimed at the originating tab even while another tab is
+selected or after the tab moves to another window. Independent instances use
+separate sockets. Outside Ghostty, the CLI defaults to `/tmp/ghostty-<uid>.sock`;
+set `GHOSTTY_SOCKET` to select a different instance.
+
+Linux validation commands:
+
+```sh
+nix develop --command zig build test -Dtest-filter=sidebar
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s test/sidegeist -v
+dbus-run-session -- python3 test/sidegeist/linux_smoke.py --binary zig-out/bin/ghostty
+```
+
+The desktop test needs Xvfb, Openbox, xdotool, Git, PyGObject and pyatspi. It
+uses temporary repositories and a local remote, loads an isolated config, and
+checks shell identities, tab moves, Git actions, IPC, reload and shutdown.
+
+## Sidebar
+
+Replaces the native tab bar with a left sidebar. The top shows rich tab cards; a [git panel](#git-panel) is pinned to the bottom.
+
+- **Title, directory, git branch** — git branch detected automatically, no setup needed
+- **Custom status entries** — show ports, environments, or any metadata via CLI
+- **Attention indicators** — orange dot on tabs with notifications or bell
+- **Drag-and-drop** — reorder tabs by dragging
+- **Move between windows** — drag a tab card out of the sidebar and drop it on another window (or anywhere else for a new window); the same actions are in the tab's context menu
+- **Theme-aware** — colors derived from your terminal theme
+- **Git panel** — branch, changes, and commit / push / pull for the selected tab's repo ([details](#git-panel))
+
+### Config
+
+```
+# Choose which tab-card fields to show (default: all)
+sidebar-fields = title,directory,git-branch,status
+
+# Show the git panel at the bottom of the sidebar (default: true)
+sidebar-git = true
+```
+
+### CLI
+
+Use the installed `zig-out/bin/ghosttyctl`, or symlink `cli/ghosttyctl` somewhere on your PATH (e.g. `~/.local/bin/ghosttyctl`). Python 3 is required.
+
+```bash
+ghosttyctl rename "My Tab"                                    # rename tab
+ghosttyctl notify --title "Done" --body "Build finished"      # send notification
+ghosttyctl set-status server "localhost:3000" --icon network  # add status entry
+ghosttyctl clear-status server                                # remove it
+ghosttyctl set-color blue                                    # color this tab
+ghosttyctl list                                               # list all tabs
+ghosttyctl current                                            # current tab info
+```
+
+### Claude Code
+
+Add to your `~/.claude/CLAUDE.md` so Claude Code can name its tabs and set status:
+
+```markdown
+- Rename the workspace using: `ghosttyctl rename "Claude: <name>"`. Name it after the work being done.
+- Set sidebar status entries using `ghosttyctl set-status <key> <value> [--icon <sf-symbol>]` and clear with `ghosttyctl clear-status <key>`.
+```
+
+## Git panel
+
+A small git panel pinned to the bottom of the sidebar, scoped to the selected tab's repo:
+
+- **Branch + sync** — current branch, ahead/behind, and inline checkout / commit / push / pull
+- **Changes** — pending files with colour-coded status (`M` modified, `A` added, `D` deleted, `?` untracked, `U` conflict)
+- **Click to open** — click a file to open it in your editor via `$VISUAL`/`$EDITOR` (e.g. Cursor, VS Code)
+
+This one is especially personal, built around how I work day to day. If it's not for you, turn it off with `sidebar-git = false` (see [Config](#config) above).
+
+---

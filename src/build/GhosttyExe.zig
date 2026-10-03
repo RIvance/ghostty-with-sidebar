@@ -61,6 +61,7 @@ pub fn init(b: *std.Build, cfg: *const Config, deps: *const SharedDeps) !Ghostty
 pub fn install(self: *const Ghostty) void {
     const b = self.install_step.step.owner;
     b.getInstallStep().dependOn(&self.install_step.step);
+    b.getInstallStep().dependOn(&b.addInstallBinFile(b.path("cli/ghosttyctl"), "ghosttyctl").step);
 }
 
 /// If we're in NixOS but not in the shell environment then we issue

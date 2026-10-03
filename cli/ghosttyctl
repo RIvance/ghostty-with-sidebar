@@ -1,0 +1,70 @@
+#!/usr/bin/env python3
+"""Control Sidegeist tabs using its newline-delimited JSON socket protocol."""
+import argparse
+import json
+import os
+import socket
+import sys
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__, epilog="GHOSTTY_SOCKET selects an instance; GHOSTTY_TAB_ID selects a tab. Both are set automatically inside Ghostty.")
+    commands = parser.add_subparsers(dest="command", required=True)
+    commands.add_parser("rename", help="Rename the tab; an empty title clears the override").add_argument("title")
+    notify = commands.add_parser("notify", help="Send a notification")
+    notify.add_argument("message", nargs="?")
+    notify.add_argument("--title", default="Ghostty")
+    notify.add_argument("--body")
+    status = commands.add_parser("set-status", help="Set sidebar status metadata")
+    status.add_argument("key")
+    status.add_argument("value")
+    status.add_argument("--icon", help="GTK icon name (or an SF Symbol on macOS)")
+    commands.add_parser("clear-status", help="Remove status metadata").add_argument("key")
+    commands.add_parser("set-color", help="Set the tab color").add_argument("color", choices="none blue purple pink red orange yellow green teal graphite".split())
+    commands.add_parser("list", help="List all tabs as JSON")
+    commands.add_parser("current", help="Show the current tab as JSON")
+    args = parser.parse_args()
+    params = {}
+    if args.command != "list" and os.environ.get("GHOSTTY_TAB_ID"):
+        params["tab_id"] = os.environ["GHOSTTY_TAB_ID"]
+    if args.command == "rename":
+        params["title"] = args.title
+    elif args.command == "notify":
+        body = args.body if args.body is not None else args.message
+        if body is None:
+            parser.error("notify requires a message or --body")
+        params.update(title=args.title, body=body)
+    elif args.command == "set-status":
+        params.update(key=args.key, value=args.value)
+        if args.icon:
+            params["icon"] = args.icon
+    elif args.command == "clear-status":
+        params["key"] = args.key
+    elif args.command == "set-color":
+        params["color"] = args.color
+    path = os.environ.get("GHOSTTY_SOCKET", f"/tmp/ghostty-{os.getuid()}.sock")
+    request = json.dumps({"method": f"tab.{args.command}", "params": params}, ensure_ascii=False).encode() + b"\n"
+    try:
+        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as client:
+            client.settimeout(5)
+            client.connect(path)
+            client.sendall(request)
+            with client.makefile("rb") as stream:
+                response = stream.readline(1024 * 1024)
+            if not response.endswith(b"\n"):
+                raise ValueError("incomplete or oversized response")
+            result = json.loads(response)
+        if not isinstance(result, dict) or not isinstance(result.get("ok"), bool):
+            raise ValueError("invalid response")
+        print(json.dumps(result, ensure_ascii=False))
+        if not result["ok"]:
+            print(f"error: {result.get('error', 'request failed')}", file=sys.stderr)
+            return 1
+    except (OSError, ValueError) as error:
+        print(f"error: {path}: {error}", file=sys.stderr)
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

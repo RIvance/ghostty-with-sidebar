@@ -1606,6 +1606,17 @@ pub const Surface = extern struct {
             try global.environMap();
         errdefer env.deinit();
 
+        if (app.sidegeistSocket()) |path| {
+            try env.put("GHOSTTY_SOCKET", path);
+        } else {
+            _ = env.orderedRemove("GHOSTTY_SOCKET");
+        }
+        if (ext.getAncestor(@import("tab.zig").Tab, self.as(gtk.Widget))) |tab| {
+            try env.put("GHOSTTY_TAB_ID", tab.getId());
+        } else {
+            _ = env.orderedRemove("GHOSTTY_TAB_ID");
+        }
+
         if (app.savedLanguage()) |language| {
             try env.put("LANG", language);
         } else {

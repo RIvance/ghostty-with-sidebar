@@ -157,18 +157,33 @@ template $GhosttyWindow: Adw.ApplicationWindow {
           visible: bind template.debug;
         }
 
-        Adw.ToastOverlay toast_overlay {
-          Adw.TabView tab_view {
-            notify::n-pages => $notify_n_pages();
-            notify::selected-page => $notify_selected_page();
-            close-page => $close_page();
-            page-attached => $page_attached();
-            page-detached => $page_detached();
-            create-window => $tab_create_window();
-            setup-menu => $setup_tab_menu();
-            menu-model: tab_context_menu;
-            shortcuts: none;
-          }
+        Gtk.Paned sidebar_paned {
+          orientation: horizontal;
+          position: 230;
+          shrink-start-child: false;
+          resize-start-child: false;
+          shrink-end-child: false;
+          resize-end-child: true;
+          wide-handle: false;
+
+          start-child: Gtk.Box sidebar_box {
+            orientation: vertical;
+            width-request: 160;
+          };
+
+          end-child: Adw.ToastOverlay toast_overlay {
+            Adw.TabView tab_view {
+              notify::n-pages => $notify_n_pages();
+              notify::selected-page => $notify_selected_page();
+              close-page => $close_page();
+              page-attached => $page_attached();
+              page-detached => $page_detached();
+              create-window => $tab_create_window();
+              setup-menu => $setup_tab_menu();
+              menu-model: tab_context_menu;
+              shortcuts: none;
+            }
+          };
         }
       }
     }

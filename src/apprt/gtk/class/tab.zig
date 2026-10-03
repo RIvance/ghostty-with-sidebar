@@ -17,6 +17,7 @@ const SplitTree = @import("split_tree.zig").SplitTree;
 const Surface = @import("surface.zig").Surface;
 const TitleDialog = @import("title_dialog.zig").TitleDialog;
 const Overrides = @import("Overrides.zig");
+const SidebarMetadata = @import("../sidebar/model.zig").Metadata;
 
 const log = std.log.scoped(.gtk_ghostty_window);
 
@@ -143,6 +144,11 @@ pub const Tab = extern struct {
     };
 
     pub const signals = struct {
+        pub const @"metadata-changed" = struct {
+            pub const name = "metadata-changed";
+            pub const connect = impl.connect;
+            const impl = gobject.ext.defineSignal(name, Self, &.{}, void);
+        };
         /// Emitted whenever the tab would like to be closed.
         pub const @"close-request" = struct {
             pub const name = "close-request";
@@ -157,6 +163,10 @@ pub const Tab = extern struct {
     };
 
     const Private = struct {
+        /// A stable identity shared by every split in this tab, including
+        /// after the tab is moved into another window.
+        sidebar_id: ?[:0]const u8 = null,
+        sidebar_metadata: SidebarMetadata = .{},
         /// The configuration that this surface is using.
         config: ?*Config = null,
 
@@ -223,6 +233,7 @@ pub const Tab = extern struct {
     }
 
     fn init(self: *Self, _: *Class) callconv(.c) void {
+        self.private().sidebar_id = std.mem.span(glib.uuidStringRandom());
         gtk.Widget.initTemplate(self.as(gtk.Widget));
 
         // Init our actions
@@ -284,6 +295,18 @@ pub const Tab = extern struct {
         return self.getSplitTree().getActiveSurface();
     }
 
+    pub fn getId(self: *Self) [:0]const u8 {
+        return self.private().sidebar_id.?;
+    }
+
+    pub fn getSidebarMetadata(self: *Self) *SidebarMetadata {
+        return &self.private().sidebar_metadata;
+    }
+
+    pub fn notifyMetadata(self: *Self) void {
+        signals.@"metadata-changed".impl.emit(self, null, .{}, null);
+    }
+
     /// Get the surface tree of this tab.
     pub fn getSurfaceTree(self: *Self) ?*Surface.Tree {
         const priv = self.private();
@@ -340,6 +363,8 @@ pub const Tab = extern struct {
 
     fn finalize(self: *Self) callconv(.c) void {
         const priv = self.private();
+        if (priv.sidebar_id) |v| glib.free(@ptrCast(@constCast(v)));
+        priv.sidebar_metadata.deinit(std.heap.c_allocator);
         if (priv.tooltip) |v| {
             glib.free(@ptrCast(@constCast(v)));
             priv.tooltip = null;
@@ -575,6 +600,7 @@ pub const Tab = extern struct {
 
             // Signals
             signals.@"close-request".impl.register(.{});
+            signals.@"metadata-changed".impl.register(.{});
 
             // Virtual methods
             gobject.Object.virtual_methods.dispose.implement(class, &dispose);

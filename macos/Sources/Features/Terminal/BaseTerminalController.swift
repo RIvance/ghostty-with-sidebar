@@ -148,9 +148,13 @@ class BaseTerminalController: NSWindowController,
 
         super.init(window: nil)
 
-        // Initialize our initial surface.
+        // Initialize our initial surface, injecting IPC environment variables.
         guard let ghostty_app = ghostty.app else { preconditionFailure("app must be loaded") }
-        self.surfaceTree = tree ?? .init(view: Ghostty.SurfaceView(ghostty_app, baseConfig: base))
+        var config = base ?? Ghostty.SurfaceConfiguration()
+        config.environmentVariables["GHOSTTY_SOCKET"] = "/tmp/ghostty-\(getuid()).sock"
+        let surfaceUUID = UUID()
+        config.environmentVariables["GHOSTTY_TAB_ID"] = surfaceUUID.uuidString
+        self.surfaceTree = tree ?? .init(view: Ghostty.SurfaceView(ghostty_app, baseConfig: config, uuid: surfaceUUID))
         Self.updateSurfaceControllers(self, from: .init(), to: surfaceTree)
 
         // Setup our bell state for the window
@@ -1332,6 +1336,21 @@ class BaseTerminalController: NSWindowController,
         promptTabTitle()
     }
 
+    @IBAction func setTabColor(_ sender: NSMenuItem) {
+        guard let color = TerminalTabColor(rawValue: sender.tag) else { return }
+        (window as? TerminalWindow)?.tabColor = color
+    }
+
+    @IBAction func toggleTabBorder(_ sender: Any) {
+        let current = UserDefaults.standard.bool(forKey: "SidebarShowCardBorder")
+        UserDefaults.standard.set(!current, forKey: "SidebarShowCardBorder")
+    }
+
+    @IBAction func toggleDimInactiveColors(_ sender: Any) {
+        let current = UserDefaults.standard.bool(forKey: "SidebarDimInactiveColors")
+        UserDefaults.standard.set(!current, forKey: "SidebarDimInactiveColors")
+    }
+
     @IBAction func splitRight(_ sender: Any) {
         guard let surface = focusedSurface?.surface else { return }
         ghostty.split(surface: surface, direction: GHOSTTY_SPLIT_DIRECTION_RIGHT)
@@ -1501,6 +1520,19 @@ extension BaseTerminalController: NSMenuItemValidation {
         switch item.action {
         case #selector(findHide):
             return focusedSurface?.searchState != nil
+
+        case #selector(setTabColor(_:)):
+            let current = (window as? TerminalWindow)?.tabColor ?? .none
+            item.state = (TerminalTabColor(rawValue: item.tag) == current) ? .on : .off
+            return true
+
+        case #selector(toggleTabBorder(_:)):
+            item.state = UserDefaults.standard.bool(forKey: "SidebarShowCardBorder") ? .on : .off
+            return true
+
+        case #selector(toggleDimInactiveColors(_:)):
+            item.state = UserDefaults.standard.bool(forKey: "SidebarDimInactiveColors") ? .on : .off
+            return true
 
         default:
             return true

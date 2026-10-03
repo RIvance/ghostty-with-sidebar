@@ -12,6 +12,7 @@
   pkg-config,
   zig_0_16,
   pandoc,
+  python3,
   revision ? "dirty",
   optimize ? "Debug",
   enableX11 ? true,
@@ -42,6 +43,7 @@ in
       fileset = lib.fileset.intersection (lib.fileset.fromSource (lib.sources.cleanSource ../.)) (
         lib.fileset.unions [
           ../dist/linux
+          ../cli
           ../images
           ../include
           ../po
@@ -102,6 +104,9 @@ in
     ];
 
     postInstall = ''
+      substituteInPlace "$out/bin/ghosttyctl" \
+        --replace-fail '#!/usr/bin/env python3' '#!${python3}/bin/python3'
+
       terminfo_src=${
         if stdenv.hostPlatform.isDarwin
         then ''"$out/Applications/Ghostty.app/Contents/Resources/terminfo"''
@@ -127,6 +132,10 @@ in
       echo "gst_all_1.gstreamer" >> "$out/nix-support/propagated-user-env-packages"
       echo "gst_all_1.gst-plugins-base" >> "$out/nix-support/propagated-user-env-packages"
       echo "gst_all_1.gst-plugins-good" >> "$out/nix-support/propagated-user-env-packages"
+    '';
+
+    preFixup = ''
+      gappsWrapperArgs+=(--prefix PATH : ${lib.makeBinPath [git]})
     '';
 
     meta = {
