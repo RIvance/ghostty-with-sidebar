@@ -44,6 +44,7 @@ alex19ep
 alexbathome
 alexfeijoo44
 alexjuca
+aljohri
 alosarjos
 amadeus
 and-rs
@@ -52,8 +53,11 @@ anhthang
 anmitalidev
 anthonyzhoon
 aprilnea
+arc-source-coder
+aredmondd
 arneshbanerjee
 arvin7liu
+aryanhamedani
 athaapa
 atomk
 aurelleb
@@ -68,6 +72,7 @@ bennettp123
 benodiwal
 bernsno
 beryesa
+binaryfire
 bitigchi
 bkircher
 bleikurr
@@ -77,14 +82,18 @@ brentschroeter
 brianc442
 by-nelson
 c0x0o
+cammeresi
 carldaws
 carlvillads
 cespare
 charliie-dev
 chernetskyi
 chronologos
+clavinjune
 clemg
+clinta
 cmwetherell
+complexsplit
 crayxt
 craziestowl
 -creativision meatproxying
@@ -96,9 +105,13 @@ d-dudas
 daiimus
 damyanbogoev
 danneu
+danudey
 danulqua
 dariogriffo
+database64128
 dave92082
+davey-hughes
+davidhodge
 -davidpmclaughlin Refusing to follow AI policy and exhibit good faith behavior
 davidsanchez222
 deblasis
@@ -110,6 +123,7 @@ diego-moment
 diegoarmstrong
 dkinzler
 dmehala
+dmkenney
 dmunozv04
 dobbylee
 dolzenko
@@ -120,7 +134,9 @@ douglas-macgregor
 drepper
 dungdm93
 dzhlobo
+edsarmiento
 ekaterinepapava
+ekusiadadus
 elias8
 elitex45
 -enkr1
@@ -142,11 +158,14 @@ fornwall
 francescarpi
 francislata
 fru1tworld
+gaborbernat
 gadgetman6
 gagbo
+ghdtjdwn
 ghokun
 gmile
 gordonbondon
+-gotar No HITL
 gotenksin
 gpanders
 guilhermetk
@@ -155,17 +174,21 @@ h3nock
 hackattack
 hakonhagland
 halosatrio
+hamidp
 heaths
 heddxh heddxh
+heitoraugustoln
 helium777
 -highimpact-dev Disrespectful AI user
 hlcfan
 howdeploy
 hqnna
+huge
 hulet
 i999rri
 ibaios
 icodesign
+-ifmael
 illiakrauchanka
 j-c-m
 j0hnm4r5
@@ -177,6 +200,7 @@ jamylak
 jarred-sumner
 jcollie
 jesusvazquez
+jglanz
 jguthmiller
 jmcgover
 jmr
@@ -193,6 +217,7 @@ kataokatsuki
 kawarimidoll
 kayleung
 kenvandine
+kgni
 khipp
 kierancanter
 kirwiisp
@@ -202,6 +227,7 @@ kloneets
 knu
 -kody-w
 konstantinhudyakov
+-kooshapari No HITL
 koranir
 korikhin
 kostich
@@ -210,21 +236,27 @@ kristofersoler
 kylesower
 laxystem
 lebdron
+lehni
 lepips
 liby
 linustalacko
+locriani
 lonsagisawa
 lotheac
 louisunlimited
 luisnquin
 lynicis
 mac0ne
+maddythewisp
+magnussp
 mahnokropotkinvich
+mangkoran
 marijagjorgjieva
 markdorison
 markhuot
 marler8997
 marrocco-simone
+-martzcode Repeated meatproxying in spite of prior warning
 masterflitzer
 matkotiric
 mattn
@@ -256,6 +288,7 @@ myleshen
 nagato-yuzuru
 natesmyth
 neo773
+neobrain
 neoto
 neurosnap
 nicholas-ochoa
@@ -269,7 +302,9 @@ nolinmcfarland
 nouritsu
 nwehg
 ocean6954
+ollieatkinson
 ollioddi
+olrtg
 oshdubh
 otomn
 paaloeye
@@ -293,25 +328,33 @@ pressatojump
 prihlop
 priyans-hu
 pssalman
+pugma
 puzza007
+pyre909
 qappell
 quinnypig
 qwerasd205
 radicaltray
 ragnoroct
 raphamorim
+rayzerrek
+-rebecca-bell-2001 automated vomit
 reo101
 rewdy
 rgehan
 rhodes-b
 rightaditya
+-riskirills66 Demonstrated indefensibly poor taste, judgement and AI steering capabilities
 rjwittams
 rkoten
 rmengelbrecht
 rmunn
+robmorgan
 rockorager
+romen
 ronijacobson
 rpfaeffle
+rtgibbons
 ruoyouz
 ruseel
 sahilkmishra
@@ -340,12 +383,14 @@ tasselx
 tbrundige
 tdgroot
 tdslot
+thapakrish
 thirstycrow
 -thomas-trijindev No human in the loop
 thomasfedb
 thoutbeckers
 ticclick
 tnagatomi
+tonypapousek
 toppk
 tothedarktowercame
 trag1c
@@ -373,6 +418,8 @@ yabbal
 yak3d
 yamshta
 ydah
+yeager
+yinxiangshi
 -zaviro
 zenangst
 zenyr
@@ -380,3 +427,4 @@ zeshi09
 zlitus
 -zorzysty Meatproxying
 zubb
+zzznu

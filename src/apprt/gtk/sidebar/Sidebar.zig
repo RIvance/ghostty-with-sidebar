@@ -284,10 +284,10 @@ const Row = struct {
         self.attention.as(gtk.Widget).setVisible(self.page.getNeedsAttention());
         const widget = self.widget.as(gtk.Widget);
         if (self.page.getSelected() != 0) widget.addCssClass("active") else widget.removeCssClass("active");
-        inline for (std.meta.fields(model.Color)) |c| widget.removeCssClass("color-" ++ c.name);
+        inline for (@typeInfo(model.Color).@"enum".field_names) |c| widget.removeCssClass("color-" ++ c);
         const metadata = self.tab.getSidebarMetadata();
         var color_buf: [40]u8 = undefined;
-        widget.addCssClass(std.fmt.bufPrintZ(&color_buf, "color-{s}", .{@tagName(metadata.color)}) catch unreachable);
+        widget.addCssClass(std.fmt.bufPrintSentinel(&color_buf, "color-{s}", .{@tagName(metadata.color)}, 0) catch unreachable);
         while (self.statuses.as(gtk.Widget).getFirstChild()) |child| self.statuses.remove(child);
         // Match Sidegeist's deterministic ordering by key.
         const keys = alloc.dupe([]const u8, metadata.statuses.keys()) catch return;
@@ -323,7 +323,7 @@ const Row = struct {
     fn syncPwd(self: *Row) void {
         const pwd = if (self.surface) |s| s.getPwd() else null;
         const text = pwd orelse "";
-        const basename = alloc.dupeZ(u8, if (pwd) |v| std.fs.path.basename(v) else "") catch return;
+        const basename = alloc.dupeSentinel(u8, if (pwd) |v| std.fs.path.basename(v) else "", 0) catch return;
         defer alloc.free(basename);
         self.directory_label.setText(basename);
         self.directory.as(gtk.Widget).setTooltipText(text);
@@ -332,7 +332,7 @@ const Row = struct {
         if (self.job) |job| job.cancel();
         self.job = null;
         if (self.pwd) |v| alloc.free(v);
-        self.pwd = if (pwd) |v| alloc.dupeZ(u8, v) catch null else null;
+        self.pwd = if (pwd) |v| alloc.dupeSentinel(u8, v, 0) catch null else null;
         self.branch.setText("");
         self.branch.as(gtk.Widget).setVisible(0);
         self.refreshBranch();
@@ -353,7 +353,7 @@ const Row = struct {
             return;
         }
         const text = if (result.ok) std.mem.trim(u8, result.stdout, "\n\r") else "";
-        const owned = alloc.dupeZ(u8, text) catch return;
+        const owned = alloc.dupeSentinel(u8, text, 0) catch return;
         defer alloc.free(owned);
         self.branch.setText(owned);
         self.branch.as(gtk.Widget).setVisible(@intFromBool(text.len > 0));
@@ -433,9 +433,9 @@ const Row = struct {
         menu.append(i18n._("Rename Tab…"), "card.rename");
         const colors = gio.Menu.new();
         defer colors.unref();
-        inline for (std.meta.fields(model.Color)) |c| {
-            const item = gio.MenuItem.new(c.name, null);
-            item.setActionAndTargetValue("card.color", glib.Variant.newString(c.name));
+        inline for (@typeInfo(model.Color).@"enum".field_names) |c| {
+            const item = gio.MenuItem.new(c, null);
+            item.setActionAndTargetValue("card.color", glib.Variant.newString(c));
             colors.appendItem(item);
             item.unref();
         }

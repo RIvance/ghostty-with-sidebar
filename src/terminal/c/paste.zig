@@ -32,6 +32,8 @@ pub const Request = extern struct {
     mimes_len: usize,
     reader: io.MimeReader,
     allow_unsafe: bool,
+
+    pub const sized_base = "allow_unsafe";
 };
 
 pub fn terminal_paste(
@@ -42,9 +44,7 @@ pub fn terminal_paste(
     const wrapper = terminal_ orelse return .invalid_value;
     const req = req_ orelse return .invalid_value;
 
-    // Every field is required; a smaller size is a caller from a
-    // different ABI version than any this struct has had.
-    if (req.size < @sizeOf(Request)) return .invalid_value;
+    if (!lib.sizedCheck(.input, req)) return .invalid_value;
 
     // The handler always has a write_pty trampoline that no-ops without
     // a C callback, so the "nothing can be written" check is ours.
@@ -60,8 +60,9 @@ pub fn terminal_paste(
 
     // A paste carries a handful of representations, so keep the common
     // case allocation-free.
-    var sfa = std.heap.stackFallback(256, wrapper.terminal.gpa());
-    const alloc = sfa.get();
+    var sfa_buf: [256]u8 = undefined;
+    var sfa: std.heap.BufferFirstAllocator = .init(&sfa_buf, wrapper.terminal.gpa());
+    const alloc = sfa.allocator();
     const mimes = alloc.alloc([]const u8, c_mimes.len) catch return .out_of_memory;
     defer alloc.free(mimes);
     for (mimes, c_mimes) |*mime, c_mime| mime.* = c_mime.ptr[0..c_mime.len];
@@ -235,6 +236,12 @@ test "is_safe with newline" {
     try testing.expect(!is_safe(unsafe.ptr, unsafe.len));
 }
 
+test "is_safe with carriage return" {
+    const testing = std.testing;
+    const unsafe = "hello\rworld";
+    try testing.expect(!is_safe(unsafe.ptr, unsafe.len));
+}
+
 test "is_safe with bracketed paste end" {
     const testing = std.testing;
     const unsafe = "hello\x1b[201~world";
@@ -367,10 +374,20 @@ test "terminal_paste null handling" {
     try testing.expectEqual(Result.invalid_value, terminal_paste(t, null, &written));
     try testing.expect(written);
 
-    // A size smaller than the struct is rejected.
+    // The size rule: below the base layout is rejected, exactly the base
+    // layout is enough, a newer caller's zero tail is accepted and a
+    // non-zero tail is rejected.
     var small = req;
-    small.size = @sizeOf(usize);
+    small.size = lib.sizedBaseEnd(Request) - 1;
     try testing.expectEqual(Result.invalid_value, terminal_paste(t, &small, &written));
+    small.size = lib.sizedBaseEnd(Request);
+    try testing.expectEqual(Result.success, terminal_paste(t, &small, &written));
+    const Larger = extern struct { req: Request, extra: [8]u8 };
+    var large: Larger = .{ .req = req, .extra = @splat(0) };
+    large.req.size = @sizeOf(Larger);
+    try testing.expectEqual(Result.success, terminal_paste(t, &large.req, &written));
+    large.extra[0] = 1;
+    try testing.expectEqual(Result.invalid_value, terminal_paste(t, &large.req, &written));
 
     // MIME types without a reader are rejected; none at all is fine.
     var unreadable = req;
@@ -434,6 +451,21 @@ test "terminal_paste text and unsafe" {
     try testing.expect(written);
     try testing.expectEqualStrings("rm -rf /\r", S.writtenSlice());
     try testing.expectEqual(@as(usize, 2), unsafe_contents.reads[0]);
+
+    // A carriage return is the Enter key on the input stream, so it is
+    // refused exactly like a newline when unbracketed.
+    S.reset();
+    written = false;
+    var cr_contents: S.Contents = .init(&.{.{ "text/plain", "rm -rf /\r" }});
+    var cr = cr_contents.request();
+    try testing.expectEqual(Result.rejected, terminal_paste(t, &cr, &written));
+    try testing.expectEqual(@as(usize, 0), S.write_count);
+    try testing.expect(!written);
+
+    cr.allow_unsafe = true;
+    try testing.expectEqual(Result.success, terminal_paste(t, &cr, &written));
+    try testing.expect(written);
+    try testing.expectEqualStrings("rm -rf /\r", S.writtenSlice());
 
     // Bracketed paste mode frames the text through the real mode path.
     S.reset();
@@ -528,7 +560,7 @@ test "terminal_paste event" {
     const ok_prefix = "\x1b]5522;type=read:status=OK:loc=primary:pw=";
     const pw_end = std.mem.indexOfPos(u8, S.writtenSlice(), ok_prefix.len, "\x1b\\").?;
     var read_buf: [256]u8 = undefined;
-    const read = try std.fmt.bufPrint(
+    const read = try std.mem.print(
         &read_buf,
         "\x1b]5522;type=read:pw={s}:name=UGFzdGUgZXZlbnQ=;dGV4dC9wbGFpbg==\x1b\\",
         .{S.writtenSlice()[ok_prefix.len..pw_end]},

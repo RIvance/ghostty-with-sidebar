@@ -139,7 +139,7 @@ pub fn setDirectory(self: *Self, pwd: ?[:0]const u8) void {
     if (self.job) |job| job.cancel();
     self.job = null;
     if (self.pwd) |v| alloc.free(v);
-    self.pwd = if (pwd) |v| alloc.dupeZ(u8, v) catch null else null;
+    self.pwd = if (pwd) |v| alloc.dupeSentinel(u8, v, 0) catch null else null;
     if (self.root) |v| alloc.free(v);
     self.root = null;
     self.resetStatus();
@@ -210,7 +210,7 @@ fn completed(data: *anyopaque, result: Command.Result) void {
     switch (kind) {
         .root => {
             const path = std.mem.trimEnd(u8, result.stdout, "\n");
-            self.root = alloc.dupeZ(u8, path) catch return;
+            self.root = alloc.dupeSentinel(u8, path, 0) catch return;
             self.body.as(gtk.Widget).setSensitive(1);
             self.refresh();
         },
@@ -233,7 +233,7 @@ fn completed(data: *anyopaque, result: Command.Result) void {
             var lines = std.mem.splitScalar(u8, result.stdout, '\n');
             while (lines.next()) |line| {
                 if (line.len == 0) continue;
-                const name = alloc.dupeZ(u8, line) catch continue;
+                const name = alloc.dupeSentinel(u8, line, 0) catch continue;
                 defer alloc.free(name);
                 const item = gio.MenuItem.new(name, null);
                 item.setActionAndTargetValue("git.checkout", glib.Variant.newString(name));
@@ -322,7 +322,7 @@ fn commit(self: *Self) void {
         self.showError(std.mem.span(i18n._("Enter a commit message.")));
         return;
     }
-    const message = alloc.dupeZ(u8, text) catch return;
+    const message = alloc.dupeSentinel(u8, text, 0) catch return;
     if (self.commit_message) |v| alloc.free(v);
     self.commit_message = message;
     self.run(.add, &.{ "git", "add", "-A" });
@@ -347,7 +347,7 @@ fn confirmDiscard(self: *Self, file: ?git.File) void {
     if (self.confirmation != null or self.root == null or !self.cancelRefresh()) return;
     self.clearDiscard();
     self.discard_file = if (file) |v| copyFile(v) catch return else null;
-    const body = if (file) |v| std.fmt.allocPrintSentinel(alloc, "Discard all staged and unstaged changes to {s}? Untracked or added files will be deleted. This cannot be undone.", .{v.path}, 0) catch return else alloc.dupeZ(u8, "Discard all staged and unstaged changes in this repository and delete untracked files? This cannot be undone.") catch return;
+    const body = if (file) |v| std.fmt.allocPrintSentinel(alloc, "Discard all staged and unstaged changes to {s}? Untracked or added files will be deleted. This cannot be undone.", .{v.path}, 0) catch return else alloc.dupeSentinel(u8, "Discard all staged and unstaged changes in this repository and delete untracked files? This cannot be undone.", 0) catch return;
     defer alloc.free(body);
     const dialog = adw.AlertDialog.new(i18n._("Discard Changes?"), body);
     _ = dialog.as(gobject.Object).refSink();
@@ -373,9 +373,9 @@ fn discardResponse(dialog: *adw.AlertDialog, response: [*:0]u8, self: *Self) cal
 }
 
 fn copyFile(file: git.File) !git.File {
-    const path = try alloc.dupeZ(u8, file.path);
+    const path = try alloc.dupeSentinel(u8, file.path, 0);
     errdefer alloc.free(path);
-    return .{ .path = path, .original_path = if (file.original_path) |v| try alloc.dupeZ(u8, v) else null, .status = file.status, .untracked = file.untracked, .added = file.added };
+    return .{ .path = path, .original_path = if (file.original_path) |v| try alloc.dupeSentinel(u8, v, 0) else null, .status = file.status, .untracked = file.untracked, .added = file.added };
 }
 fn freeFile(file: git.File) void {
     alloc.free(file.path);

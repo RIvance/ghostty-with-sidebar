@@ -15,9 +15,9 @@ pub const Fields = struct {
         var parts = std.mem.splitScalar(u8, text, ',');
         while (parts.next()) |part| {
             const name = std.mem.trim(u8, part, " \t\r\n");
-            inline for (std.meta.fields(Fields)) |field| {
-                if (std.mem.eql(u8, name, field.name)) {
-                    @field(result, field.name) = true;
+            inline for (@typeInfo(Fields).@"struct".field_names) |field| {
+                if (std.mem.eql(u8, name, field)) {
+                    @field(result, field) = true;
                     found = true;
                 }
             }
@@ -45,9 +45,9 @@ pub const Metadata = struct {
     pub fn set(self: *Metadata, alloc: Allocator, key: []const u8, value: []const u8, icon: ?[]const u8) !void {
         const owned_key = try alloc.dupe(u8, key);
         errdefer alloc.free(owned_key);
-        const owned_value = try alloc.dupeZ(u8, value);
+        const owned_value = try alloc.dupeSentinel(u8, value, 0);
         errdefer alloc.free(owned_value);
-        const owned_icon = if (icon) |v| try alloc.dupeZ(u8, v) else null;
+        const owned_icon = if (icon) |v| try alloc.dupeSentinel(u8, v, 0) else null;
         errdefer if (owned_icon) |v| alloc.free(v);
         try self.statuses.ensureUnusedCapacity(alloc, 1);
         self.clear(alloc, key);

@@ -31,7 +31,7 @@ nix develop --command zig build -Doptimize=ReleaseFast
 ```
 
 On other Linux distributions, install Ghostty's GTK build dependencies and
-Zig 0.16.0, then build with:
+Zig 0.17.0 and Blueprint Compiler 0.20.0 or newer, then build with:
 
 ```sh
 zig build -Doptimize=ReleaseFast

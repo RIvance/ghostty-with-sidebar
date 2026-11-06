@@ -25,7 +25,7 @@ clients: std.AutoHashMapUnmanaged(*Client, void) = .empty,
 pub fn new() !*Self {
     const self = try alloc.create(Self);
     errdefer alloc.destroy(self);
-    var path = if (glib.getenv("GHOSTTY_SOCKET")) |v| try alloc.dupeZ(u8, std.mem.span(v)) else try std.fmt.allocPrintSentinel(alloc, "/tmp/ghostty-{d}.sock", .{getuid()}, 0);
+    var path = if (glib.getenv("GHOSTTY_SOCKET")) |v| try alloc.dupeSentinel(u8, std.mem.span(v), 0) else try std.fmt.allocPrintSentinel(alloc, "/tmp/ghostty-{d}.sock", .{getuid()}, 0);
     errdefer alloc.free(path);
     // A second independent instance gets its own socket; it must never
     // unlink the first instance's endpoint. Only reclaim refused sockets
@@ -63,7 +63,7 @@ fn available(path: [:0]const u8) bool {
     var err: ?*glib.Error = null;
     const info = file.queryInfo("unix::mode,unix::uid", .{ .nofollow_symlinks = true }, null, &err) orelse {
         defer if (err) |e| e.free();
-        return if (err) |e| e.matches(gio.ioErrorQuark(), @intFromEnum(gio.IOErrorEnum.not_found)) != 0 else false;
+        return if (err) |e| e.matches(gio.ioErrorQuark(), @backingInt(gio.IOErrorEnum.not_found)) != 0 else false;
     };
     defer info.unref();
     if (info.getAttributeUint32("unix::uid") != getuid() or info.getAttributeUint32("unix::mode") & 0o170000 != 0o140000) return false;
@@ -78,7 +78,7 @@ fn available(path: [:0]const u8) bool {
     }
     defer if (err) |e| e.free();
     if (err) |e| {
-        if (e.matches(gio.ioErrorQuark(), @intFromEnum(gio.IOErrorEnum.connection_refused)) != 0) return file.delete(null, null) != 0;
+        if (e.matches(gio.ioErrorQuark(), @backingInt(gio.IOErrorEnum.connection_refused)) != 0) return file.delete(null, null) != 0;
     }
     return false;
 }
@@ -262,7 +262,7 @@ fn dispatch(line: []const u8) ![]u8 {
     if (std.mem.eql(u8, method, "tab.current")) return ok(tabInfo(target));
     if (std.mem.eql(u8, method, "tab.rename")) {
         const title = try string(params, "title") orelse return error.InvalidParams;
-        target.tab.setTitleOverride(if (title.len > 0) try a.dupeZ(u8, title) else null);
+        target.tab.setTitleOverride(if (title.len > 0) try a.dupeSentinel(u8, title, 0) else null);
         return ok(.{ .renamed = true });
     }
     if (std.mem.eql(u8, method, "tab.set-color")) {
@@ -285,8 +285,8 @@ fn dispatch(line: []const u8) ![]u8 {
         return ok(.{ .status_cleared = true });
     }
     if (std.mem.eql(u8, method, "tab.notify")) {
-        const title = try a.dupeZ(u8, try string(params, "title") orelse "Ghostty");
-        const body = try a.dupeZ(u8, try string(params, "body") orelse "");
+        const title = try a.dupeSentinel(u8, try string(params, "title") orelse "Ghostty", 0);
+        const body = try a.dupeSentinel(u8, try string(params, "body") orelse "", 0);
         target.page.setNeedsAttention(@intFromBool(target.page.getSelected() == 0 or target.window.as(gtk.Window).isActive() == 0));
         if (target.tab.getActiveSurface()) |surface| surface.sendDesktopNotification(title, body);
         return ok(.{ .notified = true });

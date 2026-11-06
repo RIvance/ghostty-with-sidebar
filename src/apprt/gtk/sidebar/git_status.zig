@@ -25,7 +25,7 @@ pub const Status = struct {
         while (records.next()) |line| {
             if (line.len < 2) continue;
             if (std.mem.startsWith(u8, line, "# branch.head ")) {
-                result.branch = try alloc.dupeZ(u8, line[14..]);
+                result.branch = try alloc.dupeSentinel(u8, line[14..], 0);
             } else if (std.mem.startsWith(u8, line, "# branch.oid ")) {
                 result.oid = try alloc.dupe(u8, line[13..]);
             } else if (std.mem.startsWith(u8, line, "# branch.ab +")) {
@@ -34,7 +34,7 @@ pub const Status = struct {
                 const behind = counts.next() orelse "-0";
                 result.behind = std.fmt.parseInt(u32, std.mem.trimStart(u8, behind, "-"), 10) catch 0;
             } else if (line[0] == '?' and line[1] == ' ') {
-                try result.files.append(alloc, .{ .path = try alloc.dupeZ(u8, line[2..]), .status = '?', .untracked = true });
+                try result.files.append(alloc, .{ .path = try alloc.dupeSentinel(u8, line[2..], 0), .status = '?', .untracked = true });
             } else if (line[0] == '1' or line[0] == '2' or line[0] == 'u') {
                 const count: usize = switch (line[0]) {
                     '1' => 8,
@@ -46,9 +46,9 @@ pub const Status = struct {
                     start = (std.mem.indexOfScalarPos(u8, line, start, ' ') orelse return error.InvalidStatus) + 1;
                 }
                 if (line.len < 4 or start >= line.len) return error.InvalidStatus;
-                const original = if (line[0] == '2') try alloc.dupeZ(u8, records.next() orelse return error.InvalidStatus) else null;
+                const original = if (line[0] == '2') try alloc.dupeSentinel(u8, records.next() orelse return error.InvalidStatus, 0) else null;
                 try result.files.append(alloc, .{
-                    .path = try alloc.dupeZ(u8, line[start..]),
+                    .path = try alloc.dupeSentinel(u8, line[start..], 0),
                     .original_path = original,
                     .status = if (line[0] == 'u') 'U' else if (line[3] != '.') line[3] else line[2],
                     .added = line[0] != 'u' and line[2] == 'A',
